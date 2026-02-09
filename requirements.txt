@@ -4,3 +4,8 @@ yfinance
 pandas
 numpy
 scipy
+easyocr
+opencv-python-headless
+Pillow
+torch
+torchvision
