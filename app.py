@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+import importlib.util
 
 from data import load_price_data
 from metrics import compute_metrics, portfolio_stats, portfolio_investment_corr
@@ -116,6 +117,10 @@ def portfolio_prob_negative_annual_return(returns_df, weights, mu_index):
     return prob, n, dist, mean_annual
 
 
+def ocr_is_available():
+    return importlib.util.find_spec("easyocr") is not None
+
+
 # ------------------ PAGE CONFIG ------------------ #
 
 st.set_page_config(
@@ -196,16 +201,30 @@ if len(tickers) == 0:
 
 # ------------------ OCR INPUT (OPTIONAL) ------------------ #
 
-uploaded_image = st.file_uploader(
-    "Upload Robinhood screenshot (optional)",
-    type=["png", "jpg", "jpeg"]
-)
+ocr_available = ocr_is_available()
+if not ocr_available:
+    st.info(
+        "OCR is optional and not installed in this environment. "
+        "To enable it, install `easyocr` (and its dependencies)."
+    )
+
+uploaded_image = None
+if ocr_available:
+    uploaded_image = st.file_uploader(
+        "Upload Robinhood screenshot (optional)",
+        type=["png", "jpg", "jpeg"]
+    )
 
 ocr_positions = {}
 raw_text = ""
 if uploaded_image is not None:
     with st.spinner("Running OCR on screenshot..."):
-        ocr_positions, raw_text = extract_shares_from_image(uploaded_image)
+        try:
+            ocr_positions, raw_text = extract_shares_from_image(uploaded_image)
+        except Exception as e:
+            st.warning(f"OCR failed to run: {e}")
+            ocr_positions = {}
+            raw_text = ""
 
 # If OCR found tickers not in the sidebar list, include them
 extra_tickers = [t for t in ocr_positions.keys() if t not in tickers]
@@ -340,7 +359,9 @@ st.markdown(
     "- Upload a screenshot of your **Robinhood** holdings and let SharpeEngine fill in share counts."
 )
 
-show_ocr_debug = st.checkbox("Show OCR debug text", value=False)
+show_ocr_debug = False
+if ocr_available:
+    show_ocr_debug = st.checkbox("Show OCR debug text", value=False)
 
 if uploaded_image is not None:
     if ocr_positions:
