@@ -1,8 +1,8 @@
 streamlit
-plotly
-yfinance
-pandas
 numpy
+pandas
+yfinance
+plotly
 scipy
 easyocr
 opencv-python-headless
