@@ -194,6 +194,24 @@ if len(tickers) == 0:
     st.warning("Please enter at least one ticker in the sidebar to get started with SharpeEngine.")
     st.stop()
 
+# ------------------ OCR INPUT (OPTIONAL) ------------------ #
+
+uploaded_image = st.file_uploader(
+    "Upload Robinhood screenshot (optional)",
+    type=["png", "jpg", "jpeg"]
+)
+
+ocr_positions = {}
+raw_text = ""
+if uploaded_image is not None:
+    with st.spinner("Running OCR on screenshot..."):
+        ocr_positions, raw_text = extract_shares_from_image(uploaded_image)
+
+# If OCR found tickers not in the sidebar list, include them
+extra_tickers = [t for t in ocr_positions.keys() if t not in tickers]
+if extra_tickers:
+    tickers = tickers + sorted(extra_tickers)
+
 # ------------------ LOAD PRICE DATA ------------------ #
 
 with st.spinner("Loading historical price data..."):
@@ -322,19 +340,9 @@ st.markdown(
     "- Upload a screenshot of your **Robinhood** holdings and let SharpeEngine fill in share counts."
 )
 
-uploaded_image = st.file_uploader(
-    "Upload Robinhood screenshot (optional)",
-    type=["png", "jpg", "jpeg"]
-)
-
 show_ocr_debug = st.checkbox("Show OCR debug text", value=False)
 
-ocr_positions = {}
-raw_text = ""
 if uploaded_image is not None:
-    with st.spinner("Running OCR on screenshot..."):
-        ocr_positions, raw_text = extract_shares_from_image(uploaded_image)
-
     if ocr_positions:
         pretty = ", ".join([f"{t}: {s} shares" for t, s in ocr_positions.items()])
         st.success(f"Detected positions from screenshot: {pretty}")
