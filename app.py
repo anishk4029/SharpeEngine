@@ -361,12 +361,20 @@ last_prices = price_df.iloc[-1]
 
 default_rows = []
 for t in mu.index:
-    if t in ocr_positions:
-        shares = ocr_positions[t]
-        price = float(last_prices.get(t, np.nan))
-        amount = shares * price if not np.isnan(price) and price > 0 else 0.0
+    if uploaded_image is not None:
+        if t in ocr_positions:
+            shares = ocr_positions[t]
+            price = float(last_prices.get(t, np.nan))
+            amount = shares * price if not np.isnan(price) and price > 0 else 0.0
+        else:
+            amount = 0.0
     else:
-        amount = 1000.0  # fallback if no OCR data
+        if t in ocr_positions:
+            shares = ocr_positions[t]
+            price = float(last_prices.get(t, np.nan))
+            amount = shares * price if not np.isnan(price) and price > 0 else 0.0
+        else:
+            amount = 1000.0  # fallback if no OCR data
 
     default_rows.append({"Ticker": t, "Amount": amount})
 
